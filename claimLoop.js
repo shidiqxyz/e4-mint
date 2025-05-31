@@ -8,34 +8,51 @@ const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
 const provider = new ethers.JsonRpcProvider(RPC_URL);
 const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
-async function claimLoop() {
-  let counter = 0;
-  let currentNonce = await provider.getTransactionCount(wallet.address, "latest");
+const CLAIM_FUNCTION_SELECTOR = "0x05632f40";
+const GAS_LIMIT = 100000;
+const TX_BATCH_SIZE = 5; // Kirim 10 tx sekaligus per batch
+const INTERVAL_MS = 1; // Delay antar batch
 
-  console.log("Starting claim loop...");
+let counter = 0;
+let successCounter = 0;
+
+async function claimLoop() {
+  let baseNonce = await provider.getTransactionCount(wallet.address, "latest");
+
+  console.log("🚀 Claim loop started");
   console.log("Wallet:", wallet.address);
-  console.log("Starting nonce:", currentNonce);
+  console.log("Starting nonce:", baseNonce);
+
+  setInterval(() => {
+    console.log(`📊 TX sent: ${counter}, Successful: ${successCounter} [${new Date().toLocaleTimeString()}]`);
+  }, 10 * 60 * 1000); // setiap 10 menit
 
   while (true) {
-    try {
-      const tx = await wallet.sendTransaction({
+    const promises = [];
+
+    for (let i = 0; i < TX_BATCH_SIZE; i++) {
+      const nonce = baseNonce + counter;
+
+      const txPromise = wallet.sendTransaction({
         to: CONTRACT_ADDRESS,
-        data: "0x05632f40", // function selector untuk `claim()`
-        gasLimit: 100000,   // sesuaikan jika perlu
-        nonce: currentNonce
+        data: CLAIM_FUNCTION_SELECTOR,
+        gasLimit: GAS_LIMIT,
+        nonce
+      })
+      .then(tx => {
+        successCounter++;
+        console.log(`[${counter}] ✅ Sent: ${tx.hash}`);
+      })
+      .catch(err => {
+        console.error(`[${counter}] ❌ Error:`, err?.reason || err?.message || err);
       });
 
+      promises.push(txPromise);
       counter++;
-      console.log(`[${counter}] Tx sent: ${tx.hash} | Nonce: ${currentNonce}`);
-      currentNonce++; // increment nonce manual
-
-    } catch (err) {
-      console.error(`[${counter}] ❌ Error on nonce ${currentNonce}:`, err?.reason || err?.message || err);
-      // Jangan increment nonce jika gagal
     }
 
-    // Delay antar tx — kecil karena kita tidak menunggu confirmation
-    await new Promise((resolve) => setTimeout(resolve, 1));
+    await Promise.all(promises);
+    await new Promise((res) => setTimeout(res, INTERVAL_MS));
   }
 }
 
