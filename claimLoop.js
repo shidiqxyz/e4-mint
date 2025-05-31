@@ -10,7 +10,7 @@ const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
 const CLAIM_FUNCTION_SELECTOR = "0x05632f40";
 const GAS_LIMIT = 100000;
-const TX_BATCH_SIZE = 5; // Kirim 10 tx sekaligus per batch
+const TX_BATCH_SIZE = 1; // Kirim 10 tx sekaligus per batch
 const INTERVAL_MS = 1; // Delay antar batch
 
 let counter = 0;
