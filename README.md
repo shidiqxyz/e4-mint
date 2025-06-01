@@ -1,6 +1,6 @@
 # e4 mint
 
-Automated script for repeatedly calling the `claim()` function on an EVM smart contract with manual nonce management.
+Fck megaeth rpc
 
 
 ## Setup
@@ -19,7 +19,6 @@ npm install ethers dotenv
 ```env
 PRIVATE_KEY="YOUR_PRIVATE_KEY"
 RPC_URL=https://carrot.megaeth.com/rpc
-CONTRACT_ADDRESS=0xbe43d66327ca5b77e7f14870a94a3058511103d3
 ```
 
 ## Usage
@@ -29,17 +28,28 @@ node claimLoop.js
 
 Sample output:
 ```
-Starting claim loop...
-Wallet: 0xYourAddress
-Starting nonce: 42
-[1] Tx sent: 0xhash1 | Nonce: 42
-[2] Tx sent: 0xhash2 | Nonce: 43
-[3] ❌ Error on nonce 44: insufficient funds...
+ Starting to send multicall transaction batches...
+Batch 1, transaction #1: sending multicall with 125 calls
+✅ Tx sent (attempt 1): 0x8e78....
+🎉 Tx confirmed in block 7562072
+✅ Batch 1 completed. Waiting 1 ms before next batch.
+
+Batch 2, transaction #1: sending multicall with 125 calls
+✅ Tx sent (attempt 1): 0x4302a....
+🎉 Tx confirmed in block 7562079
+✅ Batch 2 completed. Waiting 1 ms before next batch.
+
+Batch 3, transaction #1: sending multicall with 125 calls
+✅ Tx sent (attempt 1): 0x07f10....
+🎉 Tx confirmed in block 7562082
+✅ Batch 3 completed. Waiting 1 ms before next batch.
 ```
 
 ## Configuration
 Adjust in code:
 ```javascript
-const GAS_LIMIT = 100000;  // Modify as needed
-const TX_DELAY = 100;      // Delay between tx in ms
-```
+const BATCH_SIZE = 1;        // send 1 multicall transaction per batch
+const CALLS_PER_TX = 125;    // each transaction contains 125 claim() calls
+const GAS_LIMIT = 8_000_000; // gas limit per transaction
+const DELAY_MS = 1;          // delay between batches (1 ms)
+const MAX_RETRY = 0;         // max retry attempts on error```
